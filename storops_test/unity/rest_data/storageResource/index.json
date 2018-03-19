@@ -547,6 +547,39 @@
       "response": "empty.json"
     },
     {
+      "url": "/api/instances/storageResource/sv_6/action/modifyLun?compact=True",
+      "body": {
+        "lunParameters": {
+          "hostAccess": [
+            {
+              "host": {
+                "id": "Host_1"
+              },
+              "accessMask": 3,
+              "hlu": 1655
+            }
+          ]
+        }
+      },
+      "response": "empty.json"
+    },
+    {
+      "url": "/api/instances/storageResource/sv_7/action/modifyLun?compact=True",
+      "body": {
+        "lunParameters": {
+          "hostAccess": [
+            {
+              "host": {
+                "id": "Host_1"
+              },
+              "accessMask": 3
+            }
+          ]
+        }
+      },
+      "response": "empty.json"
+    },
+    {
       "url": "/api/types/storageResource/action/createLun?compact=True",
       "body": {
         "lunParameters": {
