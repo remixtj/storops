@@ -37,7 +37,27 @@ __author__ = 'Jay Xu'
 log = logging.getLogger(__name__)
 
 
-def prepare_lun_parameters(**kwargs):
+def prepare_lun_parameters(cli=None, **kwargs):
+    @version('<4.3')
+    def make_data_reduction_body(cli=None,
+                                 is_compression_enabled=None,
+                                 is_data_reduction_enabled=None):
+        if is_compression_enabled:
+            return {'isCompressionEnabled': is_compression_enabled}
+        return {}
+
+    @version('>=4.3')  # noqa
+    def make_data_reduction_body(cli=None,
+                                 is_compression_enabled=None,
+                                 is_data_reduction_enabled=None):
+        if is_data_reduction_enabled:
+            val = is_data_reduction_enabled
+        elif is_compression_enabled:
+            val = is_compression_enabled
+        else:
+            return {}
+        return {'isDataReductionEnabled': val}
+
     sp = kwargs.get('sp')
     if isinstance(sp, UnityStorageProcessor):
         sp_node = sp.to_node_enum()
@@ -51,7 +71,6 @@ def prepare_lun_parameters(**kwargs):
 
     lun_parameters = UnityClient.make_body(
         isThinEnabled=kwargs.get('is_thin'),
-        isCompressionEnabled=kwargs.get('is_compression'),
         size=kwargs.get('size'),
         pool=kwargs.get('pool'),
         defaultNode=sp_node,
@@ -59,6 +78,13 @@ def prepare_lun_parameters(**kwargs):
             tieringPolicy=kwargs.get('tiering_policy')),
         ioLimitParameters=UnityClient.make_body(
             ioLimitPolicy=kwargs.get('io_limit_policy')))
+
+    data_reduction_body = make_data_reduction_body(
+        cli,
+        kwargs.get('is_compression_enabled'),
+        kwargs.get('is_data_reduction_enabled'))
+
+    lun_parameters.update(data_reduction_body)
 
     # Empty host access can be used to wipe the host_access
     host_access = UnityClient.make_body(kwargs.get('host_access'),
@@ -86,7 +112,7 @@ class UnityLun(UnityResource):
     def create(cls, cli, name, pool, size, sp=None, host_access=None,
                is_thin=None, description=None, io_limit_policy=None,
                is_repl_dst=None, tiering_policy=None, snap_schedule=None,
-               is_compression=None):
+               is_compression_enabled=None, is_data_reduction_enabled=None):
         pool_clz = storops.unity.resource.pool.UnityPool
         pool = pool_clz.get(cli, pool)
 
@@ -95,7 +121,8 @@ class UnityLun(UnityResource):
             host_access=host_access, description=description,
             io_limit_policy=io_limit_policy, is_repl_dst=is_repl_dst,
             tiering_policy=tiering_policy, snap_schedule=snap_schedule,
-            is_compression=is_compression)
+            is_compression_enabled=is_compression_enabled,
+            is_data_reduction_enabled=is_data_reduction_enabled)
         resp = cli.type_action(UnityStorageResource().resource_class,
                                'createLun', **req_body)
         resp.raise_if_err()
@@ -191,7 +218,7 @@ class UnityLun(UnityResource):
 
         # `hostAccess` could be empty list which is used to remove all host
         # access
-        lun_parameters = prepare_lun_parameters(**kwargs)
+        lun_parameters = prepare_lun_parameters(cli, **kwargs)
         if lun_parameters:
             body['lunParameters'] = lun_parameters
         return body
@@ -199,17 +226,19 @@ class UnityLun(UnityResource):
     def modify(self, name=None, size=None, host_access=None,
                description=None, sp=None, io_limit_policy=None,
                is_repl_dst=None, tiering_policy=None, snap_schedule=None,
-               is_compression=None):
+               is_compression_enabled=None, is_data_reduction_enabled=None):
         if self.is_cg_member:
             if is_repl_dst is not None or snap_schedule is not None:
                 log.warning('LUN in CG not support to modify `is_repl_dst` and'
                             ' `snap_schedule`.')
-            return self.cg.modify_lun(self, name=name, size=size,
-                                      host_access=host_access,
-                                      description=description, sp=sp,
-                                      io_limit_policy=io_limit_policy,
-                                      tiering_policy=tiering_policy,
-                                      is_compression=is_compression)
+            return self.cg.modify_lun(
+                self, name=name, size=size,
+                host_access=host_access,
+                description=description, sp=sp,
+                io_limit_policy=io_limit_policy,
+                tiering_policy=tiering_policy,
+                is_compression_enabled=is_compression_enabled,
+                is_data_reduction_enabled=is_data_reduction_enabled)
 
         else:
             req_body = self._compose_lun_parameter(
@@ -217,7 +246,8 @@ class UnityLun(UnityResource):
                 host_access=host_access, description=description,
                 io_limit_policy=io_limit_policy, is_repl_dst=is_repl_dst,
                 tiering_policy=tiering_policy, snap_schedule=snap_schedule,
-                is_compression=is_compression)
+                is_compression_enabled=is_compression_enabled,
+                is_data_reduction_enabled=is_data_reduction_enabled)
             resp = self._cli.action(UnityStorageResource().resource_class,
                                     self.get_id(), 'modifyLun', **req_body)
             resp.raise_if_err()
