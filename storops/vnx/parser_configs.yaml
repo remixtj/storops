@@ -743,9 +743,9 @@ VNXMirrorViewAsync:
       converter: to_int
     - label: "Update type:"
     - label: "Time in minutes since previous update:"
-      converter: to_int
+      converter: to_int_or_not_available
     - label: "Time in minutes until next update:"
-      converter: to_int
+      converter: to_int_or_not_available
     - label: "Last Image error:"
 
 VNXMirrorViewImageAsync:
@@ -786,6 +786,7 @@ VNXMirrorGroupAsync:
     - label: "Recovery Policy:"
       key: "group_mirrors"
       converter: VNXMirrorGroupMirrorAsyncList
+      end_pattern: ""
 
 VNXMirrorGroupMirrorAsync:
   data_src: cli
