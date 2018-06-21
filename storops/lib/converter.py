@@ -386,6 +386,6 @@ def to_int_or_not_available(value_str):
     if value_str:
         try:
             ret = int(value_str)
-        except:
+        except ValueError:
             pass
     return ret
