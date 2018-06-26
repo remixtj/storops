@@ -379,4 +379,3 @@ def from_hour(hour_in_int):
     else:
         ret = None
     return ret
-    
