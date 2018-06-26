@@ -743,9 +743,9 @@ VNXMirrorViewAsync:
       converter: to_int
     - label: "Update type:"
     - label: "Time in minutes since previous update:"
-      converter: to_int_or_not_available
+      converter: to_int
     - label: "Time in minutes until next update:"
-      converter: to_int_or_not_available
+      converter: to_int
     - label: "Last Image error:"
 
 VNXMirrorViewImageAsync:

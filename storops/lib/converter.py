@@ -379,13 +379,4 @@ def from_hour(hour_in_int):
     else:
         ret = None
     return ret
-
-
-def to_int_or_not_available(value_str):
-    ret = -1
-    if value_str:
-        try:
-            ret = int(value_str)
-        except ValueError:
-            pass
-    return ret
+    
